@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Webpage</title>
+    <style>
+        :root {
+            --strong-green-blue: rgb(0, 200, 100); /* Adjust the RGB values as needed */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: black;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #f2f2f2;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+            max-height: 90vh; /* Maximum height of the container */
+            overflow-y: auto; /* Enables vertical scrolling */
+            width: 80%; /* Adjust the width as needed */
+            margin: 0 auto; /* Centering the container */
+        }
+
+        .search-bar {
+            display: flex;
+            flex: auto 1;
+            gap: 10px;
+
+            margin-bottom: 20px;
+        }
+
+        .search-bar input[type="text"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            outline: none;
+        }
+
+        .search-bar input[type="text"]:focus {
+            border-color: var(--strong-green-blue);
+        }
+
+        .search-bar button {
+            padding: 10px 15px;
+            background-color: var(--strong-green-blue);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .file-folder-inputs input[type="file"],
+        .file-folder-inputs input[type="text"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .result {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .detail {
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="search-bar">
+        <input id="search-input" type="text" placeholder="Search...">
+        <button onclick="query()">Search</button>
+    </div>
+    <div class="search-bar">
+        <div class="file-folder-inputs"><input type="file" id="fileInput" multiple></div>
+        <button onclick="uploadFiles()">Upload Files</button>
+    </div>
+    <div id="resultsContainer"></div>
+</div>
+
+<script>
+    async function fetchQueryResults(query) {
+        try {
+            const response = await fetch(`/query?q=${encodeURIComponent(query)}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;  // Process your JSON data further here
+        } catch (error) {
+            console.error('Error fetching data: ', error);
+        }
+    }
+
+
+    // Example usage
+    function query() {
+        // Get the value of the input field
+        const inputValue = document.getElementById('search-input').value;
+
+        fetchQueryResults(inputValue).then(data => {
+            // console.log("DATA", data); // Log the response data
+            displayResults(data)
+        });
+    }
+
+    function displayResults(data) {
+        const container = document.getElementById('resultsContainer');
+        data.results.forEach(result => {
+            const resultDiv = document.createElement('div');
+            resultDiv.classList.add('result');
+            resultDiv.innerHTML = `
+                <h3>Query: ${result.query}</h3>
+                <p>Original File: ${result.original_file}</p>
+            `;
+
+            result.matching_chunks.forEach(chunk => {
+                const chunkDiv = document.createElement('div');
+                chunkDiv.classList.add('detail');
+                chunkDiv.innerHTML = `
+                    <p>Confidence: ${chunk.confidence}</p>
+                    <p>Content: ${chunk.content}</p>
+                `;
+                resultDiv.appendChild(chunkDiv);
+            });
+
+            container.insertBefore(resultDiv, container.firstChild);
+        });
+    }
+
+    async function uploadFiles() {
+        // Get the file input element and its files
+        const fileInput = document.getElementById('fileInput');
+        const files = fileInput.files;
+
+        // Create an instance of FormData
+        const formData = new FormData();
+
+        // Append each file to the FormData object
+        for (const file of files) {
+            formData.append('files', file); // 'files' is the key
+        }
+
+        try {
+            // Send a POST request with the FormData
+            const response = await fetch('/add-file', {
+                method: 'POST',
+                body: formData, // The FormData instance
+                // Do not set Content-Type header when using FormData
+                // The browser will set it automatically with the boundary string
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log(result); // Process the response data as needed
+        } catch (error) {
+            console.error('Error uploading files: ', error);
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "mvp"
+version = "0.1.0"
+description = ""
+authors = ["aricma <adrian@aricma.com>"]
+packages = [{ include = "*", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "~3.8.10"
+chromadb = "^0.4.17"
+langchain = "^0.0.334"
+pypdf = "^3.17.0"
+rapidocr-onnxruntime = "^1.3.8"
+fastapi = "^0.104.1"
+uvicorn = {extras = ["standard"], version = "^0.24.0.post1"}
+python-multipart = "^0.0.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
